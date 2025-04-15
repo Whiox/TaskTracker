@@ -4,7 +4,7 @@
     <h1>Проекты {{ request.user.username }}</h1>
     <ul>
         {% for project in projects %}
-            <li>{{ project }}</li>
+            <li>Имя: <a href="{% url 'project' project.id %}">{{ project.name }}</a>, id: {{ project.id }}, Владелец: {{ project.owner }}</li>
         {% endfor %}
     </ul>
 {% endblock content %}

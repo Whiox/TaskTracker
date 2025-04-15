@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from projects.forms import ProjectForm
+from projects.models import *
 
 
 class CreateProjectView(View):
@@ -18,6 +19,11 @@ class CreateProjectView(View):
             project = form.save()
             project.owner = request.user
             project.save()
+            Member.objects.create(
+                project=project,
+                user=request.user,
+                role=Member.Role.ADMIN
+            )
             return redirect('projects')
         return render(request, 'create_project.html', {"form": form})
 
@@ -27,6 +33,27 @@ class ProjectsView(View):
     @login_required(login_url='login')
     def get(request):
         context = {
-            'projects': request.user.project_set.all()
+            'projects': request.user.projects.all()
         }
-        return render(request, 'projects.html', context)
+        return render(request, 'all_projects.html', context)
+
+
+class ProjectView(View):
+    @staticmethod
+    @login_required(login_url='login')
+    def get(request, project_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        is_owner = request.user == project.owner
+        is_member = project.members.filter(user=request.user).exists()
+
+        if not (is_owner or is_member):
+            return redirect('projects')
+
+        context = {
+            'project': project,
+            'is_owner': is_owner,
+            'members': project.members.select_related('user'),
+        }
+
+        return render(request, 'project.html', context)

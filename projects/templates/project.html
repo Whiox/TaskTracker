@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Проект {{ project.name }}</h1>
+    <p>Описание: {{ project.description }}</p>
+    <p>Владелец: {{ project.owner }}</p>
+    <p>Участники:</p>
+    <ul>
+        {% for member in project.members.all %}
+            <li>{{ member.user.username }} ({{ member.role }})</li>
+        {% endfor %}
+    </ul>
+{% endblock content %}
