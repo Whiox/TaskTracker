@@ -1,27 +1,19 @@
 <header class="bg-white">
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+    <nav class="navbar navbar-expand navbar-light bg-white border-bottom">
         <div class="container">
             <!-- Логотип слева -->
-            <a class="navbar-brand text-dark" href="{% url 'index' %}">
+            <a class="navbar-brand text-dark me-auto" href="{% url 'index' %}">
                 <i class="bi bi-rocket me-2 text-primary"></i>TaskTracker
             </a>
 
-            <!-- Кнопка для мобильных устройств -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Контент навигации -->
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Пустое пространство между лого и кнопками -->
-                <div class="ms-auto"></div>
-
-                <!-- Кнопки справа -->
-                <div class="d-flex align-items-center gap-2">
+            <!-- Кнопки управления справа -->
+            <div class="d-flex gap-2">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'logout' %}" class="btn btn-danger">Выход</a>
+                {% else %}
                     <a href="{% url 'login' %}" class="btn btn-success">Войти</a>
                     <a href="{% url 'register' %}" class="btn btn-outline-dark">Регистрация</a>
-                </div>
+                {% endif %}
             </div>
         </div>
     </nav>

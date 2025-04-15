@@ -1,4 +1,4 @@
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect
 from django.views import View
 from authentication.forms import RegisterForm, LoginForm
@@ -31,3 +31,10 @@ class LoginView(View):
             login(request, form.user)
             return redirect('index')
         return render(request, 'login.html', {"form": form})
+
+
+class LogoutView(View):
+    @staticmethod
+    def get(request):
+        logout(request)
+        return redirect('index')
