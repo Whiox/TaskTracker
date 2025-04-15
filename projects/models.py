@@ -81,3 +81,29 @@ class List(models.Model):
         unique_together = [["board", "name"]]
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Task(models.Model):
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="tasks"
+    )
+    board = models.ForeignKey(
+        Board,
+        on_delete=models.CASCADE,
+        related_name="tasks"
+    )
+    list = models.ForeignKey(
+        List,
+        on_delete=models.CASCADE,
+        related_name="tasks"
+    )
+    name = models.CharField(max_length=63)
+    description = models.TextField()
+    creator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="created_tasks"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)

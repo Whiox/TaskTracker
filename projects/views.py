@@ -144,7 +144,8 @@ class BoardView(View):
         context = {
             'project': project,
             'board': board,
-            'lists': board.lists.all()
+            'lists': board.lists.all(),
+            'tasks': board.tasks.all()
         }
 
         return render(request, 'boards.html', context)
@@ -198,3 +199,55 @@ class CreateListView(View):
         }
 
         return render(request, 'create_list.html', context)
+
+
+class CreateTaskView(View):
+    @staticmethod
+    @login_required(login_url='login')
+    def get(request, project_id, board_id, list_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        is_owner = request.user == project.owner
+        is_member = project.members.filter(user=request.user).exists()
+
+        if not (is_owner or is_member):
+            return redirect('projects')
+
+        context = {
+            'project': project,
+            'board': get_object_or_404(Board, id=board_id),
+            'list': get_object_or_404(List, id=list_id),
+            'form': TaskForm()
+        }
+
+        return render(request, 'create_task.html', context)
+
+    @staticmethod
+    @login_required(login_url='login')
+    def post(request, project_id, board_id, list_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        is_owner = request.user == project.owner
+        is_member = project.members.filter(user=request.user).exists()
+
+        if not (is_owner or is_member):
+            return redirect('projects')
+
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            task = form.save()
+            task.project = project
+            task.board = get_object_or_404(Board, id=board_id)
+            task.list = get_object_or_404(List, id=list_id)
+            task.creator = request.user
+            task.save()
+
+            return redirect('board', project_id=project_id, board_id=board_id)
+
+        context = {
+            'project': project,
+            'board': get_object_or_404(Board, id=board_id),
+            'form': form
+        }
+
+        return render(request, 'create_task.html', context)

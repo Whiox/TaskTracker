@@ -30,3 +30,13 @@ class ListForm(ModelForm):
     def save(self):
         list = super().save(commit=False)
         return list
+
+
+class TaskForm(ModelForm):
+    class Meta:
+        model = Task
+        fields = ['name', 'description']
+
+    def save(self):
+        task = super().save(commit=False)
+        return task
