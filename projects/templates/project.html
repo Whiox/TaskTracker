@@ -10,4 +10,10 @@
             <li>{{ member.user.username }} ({{ member.role }})</li>
         {% endfor %}
     </ul>
+    <p>Доски:</p>
+    <ul>
+        {% for board in project.boards.all %}
+            <li><a>{{ board.name }}</a></li>
+        {% endfor %}
+    </ul>
 {% endblock content %}

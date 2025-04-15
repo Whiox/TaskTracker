@@ -39,3 +39,22 @@ class Member(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Board(models.Model):
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="boards"
+    )
+    name = models.CharField(max_length=63)
+    description = models.TextField()
+    creator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="created_boards"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [["project", "name"]]
