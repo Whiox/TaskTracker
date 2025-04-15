@@ -9,6 +9,7 @@
             <!-- Кнопки управления справа -->
             <div class="d-flex gap-2">
                 {% if request.user.is_authenticated %}
+                    <a href="{% url 'create_project' %}" class="btn btn-primary">Создать проект</a>
                     <a href="{% url 'logout' %}" class="btn btn-danger">Выход</a>
                 {% else %}
                     <a href="{% url 'login' %}" class="btn btn-success">Войти</a>

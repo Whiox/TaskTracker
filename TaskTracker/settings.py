@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'home',
     'authentication',
+    'projects',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ TEMPLATES = [
         'DIRS': [
             'home/templates',
             'authentication/templates',
+            'projects/templates'
         ],
         'APP_DIRS': True,
         'OPTIONS': {

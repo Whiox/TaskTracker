@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Проекты {{ request.user.username }}</h1>
+    <ul>
+        {% for project in projects %}
+            <li>{{ project }}</li>
+        {% endfor %}
+    </ul>
+{% endblock content %}
