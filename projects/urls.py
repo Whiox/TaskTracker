@@ -6,4 +6,7 @@ urlpatterns = [
     path('all', ProjectsView.as_view(), name='projects'),
     path('<int:project_id>', ProjectView.as_view(), name='project'),
     path('<int:project_id>/boards/create', CreateBoardView.as_view(), name='create_board'),
+    path('<int:project_id>/boards/', BoardsView.as_view(), name='boards'),
+    path('<int:project_id>/boards/<int:board_id>', BoardView.as_view(), name='board'),
+    path('<int:project_id>/boards/<int:board_id>/lists/create', CreateListView.as_view(), name='create_list'),
 ]

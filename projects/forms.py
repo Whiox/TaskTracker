@@ -20,3 +20,13 @@ class BoardForm(ModelForm):
     def save(self):
         board = super().save(commit=False)
         return board
+
+
+class ListForm(ModelForm):
+    class Meta:
+        model = List
+        fields = ['name']
+
+    def save(self):
+        list = super().save(commit=False)
+        return list

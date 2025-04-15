@@ -58,3 +58,26 @@ class Board(models.Model):
 
     class Meta:
         unique_together = [["project", "name"]]
+
+
+class List(models.Model):
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE
+    )
+    board = models.ForeignKey(
+        Board,
+        on_delete=models.CASCADE,
+        related_name="lists"
+    )
+    name = models.CharField(max_length=63)
+    creator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="created_lists"
+    )
+
+    class Meta:
+        unique_together = [["board", "name"]]
+
+    created_at = models.DateTimeField(auto_now_add=True)

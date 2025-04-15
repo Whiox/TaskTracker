@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
+from django.utils.decorators import method_decorator
 from projects.forms import *
 from projects.models import *
 
@@ -105,3 +106,95 @@ class CreateBoardView(View):
         }
 
         return render(request, 'create_board.html', context)
+
+
+class BoardsView(View):
+    @staticmethod
+    @login_required(login_url='login')
+    def get(request, project_id):
+        project = get_object_or_404(
+            Project.objects.prefetch_related('boards__lists'),
+            id=project_id
+        )
+
+        if not (request.user == project.owner or
+                project.members.filter(user=request.user).exists()):
+            return redirect('projects')
+
+        context = {
+            'project': project,
+            'boards': project.boards.all().order_by('-created_at'),
+        }
+        return render(request, 'boards.html', context)
+
+
+class BoardView(View):
+    @staticmethod
+    @login_required(login_url='login')
+    def get(request, project_id, board_id):
+        project = get_object_or_404(Project, id=project_id)
+        board = get_object_or_404(Board, id=board_id)
+
+        is_owner = request.user == project.owner
+        is_member = project.members.filter(user=request.user).exists()
+
+        if not (is_owner or is_member):
+            return redirect('projects')
+
+        context = {
+            'project': project,
+            'board': board,
+            'lists': board.lists.all()
+        }
+
+        return render(request, 'boards.html', context)
+
+
+class CreateListView(View):
+    @staticmethod
+    @login_required(login_url='login')
+    def get(request, project_id, board_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        is_owner = request.user == project.owner
+        is_member = project.members.filter(user=request.user).exists()
+
+        if not (is_owner or is_member):
+            return redirect('projects')
+
+        context = {
+            'project': project,
+            'board': get_object_or_404(Board, id=board_id),
+            'form': ListForm(),
+        }
+
+        return render(request, 'create_list.html', context)
+
+    @staticmethod
+    @login_required(login_url='login')
+    def post(request, project_id, board_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        is_owner = request.user == project.owner
+        is_member = project.members.filter(user=request.user).exists()
+
+        if not (is_owner or is_member):
+            return redirect('projects')
+
+        form = ListForm(request.POST)
+        if form.is_valid():
+            list = form.save()
+            list.project = project
+            list.board = get_object_or_404(Board, id=board_id)
+            list.creator = request.user
+            list.save()
+
+            return redirect('board', project_id=project_id, board_id=board_id)
+
+        context = {
+            'project': project,
+            'board': get_object_or_404(Board, id=board_id),
+            'form': form
+        }
+
+        return render(request, 'create_list.html', context)

@@ -1,10 +1,99 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мои проекты | TaskTracker{% endblock %}
 
 {% block content %}
-    <h1>Проекты {{ request.user.username }}</h1>
-    <ul>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-folder2-open text-primary me-2"></i>Мои проекты
+            </h1>
+            <p class="lead text-muted">Всего проектов: {{ projects|length }}</p>
+        </div>
+        <a href="{% url 'create_project' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-lg me-2"></i>Новый проект
+        </a>
+    </div>
+
+    {% if projects %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
         {% for project in projects %}
-            <li>Имя: <a href="{% url 'project' project.id %}">{{ project.name }}</a>, id: {{ project.id }}, Владелец: {{ project.owner }}</li>
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 hover-shadow">
+                <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+                    <span class="badge bg-{% if project.status %}success{% else %}primary{% endif %}">
+                        {% if project.status %}Завершён{% else %}Активный{% endif %}
+                    </span>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Редактировать</a></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Удалить</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <a href="{% url 'project' project.id %}" class="text-decoration-none text-dark">
+                            {{ project.name }}
+                        </a>
+                    </h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar avatar-sm bg-light-primary text-primary rounded-circle me-2">
+                            {{ project.owner.username|slice:":1"|upper }}
+                        </div>
+                        <div>
+                            <small class="text-muted">Владелец:</small>
+                            <div class="fw-medium">{{ project.owner.username }}</div>
+                        </div>
+                    </div>
+                    <div class="text-muted small">
+                        <i class="bi bi-clock-history me-1"></i>
+                        Создан: {{ project.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0">
+                    <a href="{% url 'project' project.id %}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Открыть проект
+                    </a>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-    </ul>
-{% endblock content %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 my-5">
+        <div class="card shadow-sm border-0 py-5">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <h4 class="my-3">Проектов пока нет</h4>
+            <p class="text-muted">Начните с создания нового проекта</p>
+            <a href="{% url 'create_project' %}" class="btn btn-primary btn-lg mt-3">
+                <i class="bi bi-plus-lg me-2"></i>Создать первый проект
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-shadow {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .avatar {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

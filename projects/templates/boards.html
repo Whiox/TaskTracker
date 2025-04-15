@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if board %}{{ board.name }} | {% endif %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <!-- Боковая панель с досками -->
+        <div class="col-lg-3 col-xl-2 border-end vh-100">
+            <div class="sidebar-sticky p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="bi bi-columns-gap text-primary"></i> Доски
+                    </h4>
+                    <a href="{% url 'create_board' project.id %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i>Создать
+                    </a>
+                </div>
+
+                <div class="list-group gap-2">
+                    {% for b in project.boards.all %}
+                    <a href="{% url 'board' project_id=project.id board_id=b.id %}"
+                       class="list-group-item list-group-item-action d-flex align-items-center rounded-3 py-3
+                              {% if b.id == board.id %}active{% endif %}">
+                        <i class="bi bi-kanban fs-5 me-3"></i>
+                        <div>
+                            <h6 class="mb-1">{{ b.name }}</h6>
+                            <small class="opacity-50">
+                                Листов: {{ b.lists.count }}
+                            </small>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox fs-2 text-muted"></i>
+                        <p class="text-muted mt-2">Досок пока нет</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Основная область -->
+        <div class="col-lg-9 col-xl-10 bg-light min-vh-100">
+            <div class="p-4">
+                {% if board %}
+                    <!-- Заголовок и управление -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h1 class="display-6 fw-bold">
+                                <i class="bi bi-card-checklist text-primary me-2"></i>{{ board.name }}
+                            </h1>
+                            <p class="text-muted mb-0">Доска проекта: {{ project.name }}</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'create_list' project_id=project.id board_id=board.id %}"
+                               class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-2"></i>Новый лист
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Горизонтальные листы -->
+                    <div class="d-flex flex-nowrap overflow-auto pb-3" style="gap: 1rem; min-height: 80vh;">
+                        {% for list in board.lists.all %}
+                        <div class="flex-shrink-0" style="width: 300px;">
+                            <div class="card h-100 shadow-sm border-primary">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-list-task me-2"></i>{{ list.name }}
+                                    </h5>
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-white p-0"
+                                                data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">
+                                                <i class="bi bi-pencil me-2"></i>Редактировать
+                                            </a></li>
+                                            <li><a class="dropdown-item text-danger" href="#">
+                                                <i class="bi bi-trash me-2"></i>Удалить
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="avatar avatar-sm bg-light-primary text-primary rounded-circle me-2">
+                                            {{ list.creator.username|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Создатель:</small>
+                                            <div class="fw-medium">{{ list.creator.username }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="bi bi-clock-history me-1"></i>
+                                        Создан: {{ list.created_at|date:"d M Y H:i" }}
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-top-0 pt-0">
+                                    <div class="d-grid">
+                                        <button class="btn btn-outline-primary">
+                                            <i class="bi bi-plus-lg me-2"></i>Добавить задачу
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Кнопка добавления нового листа -->
+                        <div class="flex-shrink-0" style="width: 300px;">
+                            <a href="{% url 'create_list' project_id=project.id board_id=board.id %}"
+                               class="card h-100 btn btn-outline-primary border-2 border-dashed d-flex
+                                      align-items-center justify-content-center text-decoration-none">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-plus-lg fs-2 text-muted"></i>
+                                    <p class="mb-0 mt-2 text-muted">Добавить лист</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Сообщение при отсутствии выбранной доски -->
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <div class="text-center py-5">
+                            <i class="bi bi-kanban fs-1 text-muted mb-4"></i>
+                            <h2 class="mb-3">Выберите доску</h2>
+                            <p class="text-muted">Начните работу, выбрав доску из списка слева</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sidebar-sticky {
+        height: 100vh;
+        overflow-y: auto;
+        background: #f8f9fa;
+    }
+    .avatar {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+    .list-group-item.active {
+        background: #0d6efd;
+        border-color: transparent;
+        box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.15);
+    }
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    .overflow-auto::-webkit-scrollbar {
+        height: 8px;
+    }
+    .overflow-auto::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    .overflow-auto::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    .overflow-auto::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+{% endblock %}
