@@ -35,10 +35,18 @@ class ProjectsView(View):
     @staticmethod
     @login_required(login_url='login')
     def get(request):
+        user = request.user
+
+        owned_projects = user.projects.all()
+        member_projects = Project.objects.filter(members__user=user)
+
+        all_projects = (owned_projects | member_projects).distinct()
+
         context = {
-            'projects': request.user.projects.all()
+            'projects': all_projects
         }
         return render(request, 'all_projects.html', context)
+
 
 
 class ProjectView(View):
@@ -304,3 +312,43 @@ class TaskMoveView(View):
                 'status': 'error',
                 'message': str(e)
             }, status=500)
+
+
+class AddMemberView(View):
+    @method_decorator(login_required(login_url='login'))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def get(self, request, project_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        # Проверка прав
+        if not (request.user == project.owner or
+                project.members.filter(user=request.user, role=Member.Role.ADMIN).exists()):
+            return redirect('project', project_id=project_id)
+
+        form = AddMemberForm(project=project)
+        return render(request, 'add_member.html', {
+            'form': form,
+            'project': project
+        })
+
+    def post(self, request, project_id):
+        project = get_object_or_404(Project, id=project_id)
+
+        # Проверка прав
+        if not (request.user == project.owner or
+                project.members.filter(user=request.user, role=Member.Role.ADMIN).exists()):
+            return redirect('project', project_id=project_id)
+
+        form = AddMemberForm(request.POST, project=project)
+        if form.is_valid():
+            member = form.save(commit=False)
+            member.project = project
+            member.save()
+            return redirect('project', project_id=project_id)
+
+        return render(request, 'add_member.html', {
+            'form': form,
+            'project': project
+        })

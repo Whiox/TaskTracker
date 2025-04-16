@@ -1,5 +1,6 @@
 from django.forms import *
 from projects.models import *
+from django.contrib.auth import get_user_model
 
 
 class ProjectForm(ModelForm):
@@ -40,3 +41,38 @@ class TaskForm(ModelForm):
     def save(self):
         task = super().save(commit=False)
         return task
+
+
+User = get_user_model()
+
+
+class AddMemberForm(ModelForm):
+    user = ModelChoiceField(
+        queryset=User.objects.all(),
+        label="Пользователь",
+        widget=Select(attrs={'class': 'form-select'})
+    )
+
+    class Meta:
+        model = Member
+        fields = ['user', 'role']
+        widgets = {
+            'role': Select(attrs={'class': 'form-select'})
+        }
+        labels = {
+            'role': 'Роль'
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.project = kwargs.pop('project', None)
+        super().__init__(*args, **kwargs)
+        if self.project:
+            self.fields['user'].queryset = User.objects.exclude(
+                id__in=self.project.members.values('user')
+            )
+
+    def clean_user(self):
+        user = self.cleaned_data['user']
+        if Member.objects.filter(project=self.project, user=user).exists():
+            raise ValidationError("Этот пользователь уже в проекте")
+        return user

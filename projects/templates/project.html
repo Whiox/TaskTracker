@@ -20,9 +20,11 @@
             <a href="{% url 'boards' project.id %}" class="btn btn-primary">
                 Доски <i class="bi bi-arrow-right"></i>
             </a>
+            {% if request.user == project.owner %}
             <button class="btn btn-outline-primary">
                 <i class="bi bi-pencil-square"></i> Редактировать
             </button>
+            {% endif %}
         </div>
     </div>
 
@@ -62,9 +64,11 @@
                     <h5 class="card-title mb-0">
                         <i class="bi bi-people-fill me-2"></i>Участники
                     </h5>
-                    <button class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-plus-lg"></i> Добавить
-                    </button>
+                    {% if request.user == project.owner %}
+                    <a href="{% url 'add_member' project_id=project.id %}" class="btn btn-sm btn-outline-secondary">
+                        Добавить
+                    </a>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="row row-cols-1 row-cols-md-2 g-3">

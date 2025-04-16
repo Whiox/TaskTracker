@@ -14,4 +14,9 @@ urlpatterns = [
     path('tasks/<int:task_id>/move/',
          TaskMoveView.as_view(),
          name='move_task'),
+    path(
+        'projects/<int:project_id>/add_member/',
+        AddMemberView.as_view(),
+        name='add_member'
+    ),
 ]
