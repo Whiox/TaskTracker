@@ -64,56 +64,49 @@
                     <!-- Горизонтальные листы -->
                     <div class="d-flex flex-nowrap overflow-auto pb-3" style="gap: 1rem; min-height: 80vh;">
                         {% for list in board.lists.all %}
-                        <div class="flex-shrink-0" style="width: 300px;">
+                        <div class="flex-shrink-0 list-container" style="width: 300px;" data-list-id="{{ list.id }}">
                             <div class="card h-100 shadow-sm border-primary">
                                 <div class="card-header bg-primary text-white d-flex justify-content-between">
                                     <h5 class="card-title mb-0">
                                         <i class="bi bi-list-task me-2"></i>{{ list.name }}
                                     </h5>
                                     <div class="dropdown">
-                                        <button class="btn btn-link text-white p-0"
-                                                data-bs-toggle="dropdown">
+                                        <button class="btn btn-link text-white p-0" data-bs-toggle="dropdown">
                                             <i class="bi bi-three-dots-vertical"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#">
-                                                <i class="bi bi-pencil me-2"></i>Редактировать
-                                            </a></li>
-                                            <li><a class="dropdown-item text-danger" href="#">
-                                                <i class="bi bi-trash me-2"></i>Удалить
-                                            </a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Редактировать</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Удалить</a></li>
                                         </ul>
                                     </div>
                                 </div>
 
                                 <!-- Тело листа с задачами -->
-                                <div class="card-body d-flex flex-column" style="overflow-y: auto;">
-                                    <div class="task-list mb-3">
+                                <div class="card-body d-flex flex-column task-list" style="overflow-y: auto;">
+                                    <div class="tasks-container">
                                         {% for task in list.tasks.all %}
-                                        <div class="card mb-2 shadow-sm">
+                                        <div class="task card mb-2 shadow-sm"
+                                             data-task-id="{{ task.id }}"
+                                             draggable="true">
                                             <div class="card-body p-3">
                                                 <h6 class="card-title mb-2">{{ task.name }}</h6>
                                                 {% if task.description %}
-                                                <p class="small text-muted mb-2">
-                                                    {{ task.description|truncatechars:50 }}
-                                                </p>
+                                                <p class="small text-muted mb-2">{{ task.description|truncatechars:50 }}</p>
                                                 {% endif %}
                                                 <div class="d-flex align-items-center justify-content-between">
                                                     <small class="text-muted">
-                                                        <i class="bi bi-person-circle me-1"></i>
-                                                        {{ task.creator.username }}
+                                                        <i class="bi bi-person-circle me-1"></i>{{ task.creator.username }}
                                                     </small>
-                                                    <small class="text-muted">
-                                                        {{ task.created_at|date:"d M" }}
-                                                    </small>
+                                                    <small class="text-muted">{{ task.created_at|date:"d M" }}</small>
                                                 </div>
                                             </div>
                                         </div>
-                                        {% empty %}
-                                        <div class="text-center py-3">
+                                        {% endfor %}
+                                        <!-- Всегда добавляем плейсхолдер -->
+                                        <div class="empty-placeholder text-center py-3"
+                                             style="display: {% if list.tasks.all %}none{% else %}block{% endif %};">
                                             <p class="text-muted small">Нет задач</p>
                                         </div>
-                                        {% endfor %}
                                     </div>
                                 </div>
 
@@ -163,14 +156,6 @@
         overflow-y: auto;
         background: #f8f9fa;
     }
-    .avatar {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 500;
-    }
     .list-group-item.active {
         background: #0d6efd;
         border-color: transparent;
@@ -196,20 +181,136 @@
     .task-list {
         min-height: 150px;
     }
-    .card-body {
-        scrollbar-width: thin;
-        scrollbar-color: #888 #f1f1f1;
+    .dragging {
+        opacity: 0.5;
+        transform: rotate(3deg);
+        transition: all 0.3s ease;
     }
-    .card-body::-webkit-scrollbar {
-        width: 6px;
+    .task {
+        cursor: grab;
+        transition: transform 0.2s;
     }
-    .card-body::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
+    .task:active {
+        cursor: grabbing;
     }
-    .card-body::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 3px;
+    .empty-placeholder {
+        display: none;
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let draggedTask = null;
+    let originalList = null;
+
+    // Инициализация Drag and Drop
+    const initDragAndDrop = () => {
+        document.querySelectorAll('.task').forEach(task => {
+            task.draggable = true;
+            task.addEventListener('dragstart', handleDragStart);
+            task.addEventListener('dragend', handleDragEnd);
+        });
+
+        document.querySelectorAll('.task-list').forEach(list => {
+            list.addEventListener('dragover', handleDragOver);
+            list.addEventListener('drop', handleDrop);
+        });
+    };
+
+    // Обработчики событий
+    const handleDragStart = (e) => {
+        draggedTask = e.target;
+        originalList = draggedTask.closest('.list-container');
+        draggedTask.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragEnd = () => {
+        draggedTask.classList.remove('dragging');
+        updateEmptyPlaceholders();
+        draggedTask = null;
+        originalList = null;
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(e.currentTarget, e.clientY);
+        const tasksContainer = e.currentTarget.querySelector('.tasks-container');
+
+        if (!afterElement) {
+            tasksContainer.appendChild(draggedTask);
+        } else {
+            tasksContainer.insertBefore(draggedTask, afterElement);
+        }
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        const newListContainer = e.target.closest('.list-container');
+        const taskId = draggedTask.dataset.taskId;
+        const newListId = newListContainer.dataset.listId;
+
+        try {
+            await updateTaskPosition(taskId, newListId);
+            updateEmptyPlaceholders();
+
+            if (originalList !== newListContainer) {
+                const originalListTasks = originalList.querySelector('.tasks-container');
+                const newListTasks = newListContainer.querySelector('.tasks-container');
+
+                if (originalListTasks.querySelectorAll('.task').length === 0) {
+                    originalListTasks.querySelector('.empty-placeholder').style.display = 'block';
+                }
+                newListTasks.querySelector('.empty-placeholder').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Ошибка перемещения:', error);
+            originalList.querySelector('.tasks-container').appendChild(draggedTask);
+            updateEmptyPlaceholders();
+        }
+    };
+
+    // Вспомогательные функции
+    const getDragAfterElement = (container, y) => {
+        const tasks = [...container.querySelectorAll('.task:not(.dragging)')];
+        return tasks.reduce((closest, task) => {
+            const box = task.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            return offset < 0 && offset > closest.offset ?
+                   { offset, element: task } : closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    };
+
+    const updateEmptyPlaceholders = () => {
+        document.querySelectorAll('.tasks-container').forEach(container => {
+            const placeholder = container.querySelector('.empty-placeholder');
+            if (!placeholder) return;
+
+            const isEmpty = container.querySelectorAll('.task').length === 0;
+            placeholder.style.display = isEmpty ? 'block' : 'none';
+        });
+    };
+
+    // API взаимодействие
+    const updateTaskPosition = async (taskId, newListId) => {
+        const csrfToken = '{{ csrf_token }}';
+        const formData = new FormData();
+        formData.append('new_list_id', newListId);
+
+        const response = await fetch(`/projects/tasks/${taskId}/move/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Ошибка сети');
+        const data = await response.json();
+        if (data.status !== 'success') throw new Error(data.message);
+    };
+
+    // Инициализация
+    initDragAndDrop();
+    updateEmptyPlaceholders();
+});
+</script>
 {% endblock %}

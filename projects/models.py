@@ -107,3 +107,11 @@ class Task(models.Model):
         related_name="created_tasks"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.name} (Order: {self.order})"

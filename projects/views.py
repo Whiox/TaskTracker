@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.views import View
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from projects.forms import *
 from projects.models import *
 
@@ -251,3 +253,54 @@ class CreateTaskView(View):
         }
 
         return render(request, 'create_task.html', context)
+
+
+class TaskMoveView(View):
+    @method_decorator(login_required(login_url='login'))
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, task_id):
+        try:
+            task = Task.objects.select_related(
+                'project',
+                'board',
+                'list'
+            ).get(id=task_id)
+
+            is_owner = request.user == task.project.owner
+            is_member = task.project.members.filter(user=request.user).exists()
+
+            if not (is_owner or is_member):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Доступ запрещен'
+                }, status=403)
+
+            new_list_id = request.POST.get('new_list_id')
+            new_list = List.objects.get(id=new_list_id)
+
+            task.list = new_list
+            task.order = new_list.tasks.count()
+            task.save()
+
+            return JsonResponse({'status': 'success'})
+
+        except Task.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Задача не найдена'
+            }, status=404)
+
+        except List.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Лист не найден'
+            }, status=404)
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)

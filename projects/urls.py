@@ -10,5 +10,8 @@ urlpatterns = [
     path('<int:project_id>/boards/<int:board_id>', BoardView.as_view(), name='board'),
     path('<int:project_id>/boards/<int:board_id>/lists/create', CreateListView.as_view(), name='create_list'),
     path('<int:project_id>/boards/<int:board_id>/lists/<int:list_id>/tasks/create',
-         CreateTaskView.as_view(), name='create_task')
+         CreateTaskView.as_view(), name='create_task'),
+    path('tasks/<int:task_id>/move/',
+         TaskMoveView.as_view(),
+         name='move_task'),
 ]
